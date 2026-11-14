@@ -8,13 +8,21 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
-const RepoOwner = "mysterion"
-const RepoName = "aframe-vr-player"
+var RepoOwner = envOr("AVRP_REPO_OWNER", "Ramshad-dev")
+var RepoName = envOr("AVRP_REPO_NAME", "aframe-vr-player")
 
-// curl https://api.github.com/repos/mysterion/aframe-vr-player/commits?per_page=1
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+// curl https://api.github.com/repos/Ramshad-dev/aframe-vr-player/commits?per_page=1
 type Commit struct {
 	Sha     string        `json:"sha"`
 	Details CommitDetails `json:"commit"`

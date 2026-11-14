@@ -41,9 +41,12 @@ avrp --dir "/home/user/Videos/"
 # downloads the latest version(commit) of aframe-vr-player
 avrp --update
 
-# downloads https://github.com/mysterion/aframe-vr-player/tree/6757b3a6266be91c57e6236505249508b3e7d9af 
-# https://github.com/mysterion/aframe-vr-player/commits/main/
+# downloads https://github.com/Ramshad-dev/aframe-vr-player/tree/6757b3a6266be91c57e6236505249508b3e7d9af
+# https://github.com/Ramshad-dev/aframe-vr-player/commits/main/
 avrp --update --sha 6757b3a6266be91c57e6236505249508b3e7d9af
+
+# point the updater at a different fork without rebuilding
+AVRP_REPO_OWNER=mysterion AVRP_REPO_NAME=aframe-vr-player avrp --update
 
 
 ```
