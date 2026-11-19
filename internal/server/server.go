@@ -135,6 +135,7 @@ func Start(port int) {
 
 	mux.HandleFunc(listPath, listHandler)
 	mux.HandleFunc(thumbPath, thumbHandler)
+	mountScreenshare(mux)
 
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, os.Interrupt)

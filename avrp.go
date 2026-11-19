@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/mysterion/avrp/internal/dist"
+	"github.com/mysterion/avrp/internal/screenshare"
 	"github.com/mysterion/avrp/internal/server"
 	"github.com/mysterion/avrp/internal/thumbnails"
 	"github.com/mysterion/avrp/internal/utils"
@@ -49,6 +50,15 @@ func main() {
 	var getFfmpeg bool
 	var noThumb bool
 	var toggleThumb bool
+	var screenShare bool
+	var screenPreset string
+	var screenWidth int
+	var screenHeight int
+	var screenFps int
+	var screenBitrate int
+	var screenSource string
+	var screenWindow string
+	var screenAudioDevice string
 
 	flag.BoolVar(&utils.DEV, "dev", false, "starts in dev mode, serves 'index.html' from current directory")
 	flag.BoolVar(&update, "update", false, "checks & downloads the latest version(commit) of 'aframe-vr-player'")
@@ -59,6 +69,15 @@ func main() {
 	flag.BoolVar(&getFfmpeg, "get-ffmpeg", false, "downloads ffmpeg")
 	flag.BoolVar(&noThumb, "no-thumb", false, "disable thumbnail generation for current session")
 	flag.BoolVar(&toggleThumb, "toggle-thumb", false, "toggles disable/enable thumbnail generation")
+	flag.BoolVar(&screenShare, "screenshare", false, "captures the Windows desktop and exposes it as a video source")
+	flag.StringVar(&screenPreset, "screen-preset", "medium", "screenshare preset: low, medium, high or ultra")
+	flag.IntVar(&screenWidth, "screen-width", 0, "screenshare capture width (overrides preset)")
+	flag.IntVar(&screenHeight, "screen-height", 0, "screenshare capture height (overrides preset)")
+	flag.IntVar(&screenFps, "screen-fps", 0, "screenshare capture fps (overrides preset)")
+	flag.IntVar(&screenBitrate, "screen-bitrate", 0, "screenshare video bitrate in Mbps (overrides preset)")
+	flag.StringVar(&screenSource, "screen-source", "desktop", "screenshare source: desktop or window")
+	flag.StringVar(&screenWindow, "screen-window", "", "window title to capture when --screen-source=window")
+	flag.StringVar(&screenAudioDevice, "screen-audio-device", "", "DirectShow audio loopback device for screenshare")
 
 	flag.Parse()
 
@@ -112,6 +131,38 @@ func main() {
 		if !isPathValid(servDir) {
 			servDir = askForPath()
 		}
+	}
+
+	if screenShare {
+		cfg, err := screenshare.Build(screenshare.Options{
+			Enabled:     true,
+			Preset:      screenPreset,
+			Width:       screenWidth,
+			Height:      screenHeight,
+			FPS:         screenFps,
+			BitrateMbps: screenBitrate,
+			Source:      screenSource,
+			Window:      screenWindow,
+			AudioDevice: screenAudioDevice,
+		})
+		if err != nil {
+			log.Fatalf("screenshare config: %v", err)
+		}
+
+		ffmpeg, err := screenshare.FindFFmpeg()
+		if err != nil {
+			log.Fatalf("screenshare: %v", err)
+		}
+
+		cfg.AudioDevice, cfg.Audio = screenshare.PickAudioDevice(ffmpeg, cfg.AudioDevice)
+
+		capture, err := screenshare.Start(cfg, ffmpeg)
+		if err != nil {
+			log.Fatalf("screenshare: %v", err)
+		}
+		defer capture.Stop()
+
+		server.SetScreenshare(cfg.Info(), capture.Dir())
 	}
 
 	server.Init(servDir)

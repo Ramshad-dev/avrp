@@ -41,6 +41,10 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		Files:   files,
 		Folders: folders,
 	}
+
+	if screenInfo.Enabled && r.URL.Path[len(listPath):] == "" {
+		listData.Files = append([]File{{Name: "screenshare.m3u8", Duration: 0}}, listData.Files...)
+	}
 	jsonData, err := json.Marshal(listData)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
